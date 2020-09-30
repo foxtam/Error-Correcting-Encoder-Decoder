@@ -12,6 +12,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/Error Correcting Encoder-Decoder/task" />
+            <option value="$PROJECT_DIR$/Problems/Convert to byte array" />
             <option value="$PROJECT_DIR$/util" />
           </set>
         </option>
