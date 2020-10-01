@@ -1,93 +1,47 @@
 package correcter;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Random;
-import java.util.Scanner;
 
 public class Main {
 
-    static final String symbolsToMistake =
-            symbolRange('a', 'z') + symbolRange('A', 'Z') + symbolRange('0', '9') + ' ';
-
     static final Random generator = new Random();
 
-    static final int mistakeWindowWidth = 3;
-
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        String userMessage = scanner.nextLine();
-        System.out.println(userMessage);
-
-        String tripledMsg = triplingAllSymbols(userMessage);
-        System.out.println(tripledMsg);
-
-        String msgWithMistakes = makeMistakes(tripledMsg);
-        System.out.println(msgWithMistakes);
-
-        String decodedMsg = decodeIncorrectMsg(msgWithMistakes);
-        System.out.println(decodedMsg);
+    public static void main(String[] args) throws IOException {
+        byte[] bytes = readBytesFromFile("send.txt");
+        byte[] spoiledBytes = spoilByteArray(bytes);
+        writeBytesToFile("received.txt", spoiledBytes);
     }
 
-    static String decodeIncorrectMsg(String msg) {
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < msg.length(); i += mistakeWindowWidth) {
-            char baseChar = getBaseSymbol(msg.substring(i, i + mistakeWindowWidth));
-            builder.append(baseChar);
+    static byte[] readBytesFromFile(String fileName) throws IOException {
+        try (FileInputStream fileInputStream = new FileInputStream(fileName)) {
+            return fileInputStream.readAllBytes();
         }
-        return builder.toString();
     }
 
-    static char getBaseSymbol(String text) {
-        char[] charArray = text.toCharArray();
-        for (char ch : charArray) {
-            if (countSymbol(charArray, ch) > 1) return ch;
+    static void writeBytesToFile(String fileName, byte[] bytes) throws IOException {
+        try (FileOutputStream fileOutputStream = new FileOutputStream(fileName)) {
+            fileOutputStream.write(bytes);
         }
-        throw new IllegalStateException();
     }
 
-    static int countSymbol(char[] charArray, char symbol) {
-        int counter = 0;
-        for (char ch : charArray) {
-            if (symbol == ch) counter++;
+    static byte[] spoilByteArray(byte[] array) {
+        byte[] spoiledArray = new byte[array.length];
+        for (int i = 0; i < array.length; i++) {
+            spoiledArray[i] = spoilByte(array[i]);
         }
-        return counter;
+        return spoiledArray;
     }
 
-    static String triplingAllSymbols(String text) {
-        StringBuilder builder = new StringBuilder();
-        for (char ch : text.toCharArray()) {
-            builder.append(String.valueOf(ch).repeat(mistakeWindowWidth));
-        }
-        return builder.toString();
+    static byte spoilByte(byte b) {
+        return changeOneRandomBite(b);
     }
 
-    static String makeMistakes(String source) {
-        StringBuilder builder = new StringBuilder(source);
-        for (int i = 0; i < builder.length() / mistakeWindowWidth * mistakeWindowWidth; i += mistakeWindowWidth) {
-            int randomOffset = generator.nextInt(mistakeWindowWidth);
-            char randomSymbol = getRandomSymbolExcept(builder.charAt(i + randomOffset));
-            builder.setCharAt(i + randomOffset, randomSymbol);
-        }
-        return builder.toString();
-    }
-
-    static char getRandomSymbolExcept(char exceptSymbol) {
-        char randomSymbol;
-        do {
-            randomSymbol = getRandomSymbol();
-        } while (randomSymbol == exceptSymbol);
-        return randomSymbol;
-    }
-
-    static char getRandomSymbol() {
-        int randomIndex = generator.nextInt(symbolsToMistake.length());
-        return symbolsToMistake.charAt(randomIndex);
-    }
-
-    static String symbolRange(char from, char to) {
-        StringBuilder builder = new StringBuilder();
-        for (char i = from; i <= to; i++) {
-            builder.append(i);
-        }
-        return builder.toString();
+    static byte changeOneRandomBite(byte b) {
+        int power = generator.nextInt(8);
+        int mask = (int) Math.pow(2, power);
+        return ((byte) (b ^ mask));
     }
 }
