@@ -95,13 +95,14 @@ class FileEncoder {
         for (; index < encodedBytes.length - 1; index++) {
             encodedBytes[index] = encodeByteFrom3Bits(bits[index * 3], bits[index * 3 + 1], bits[index * 3 + 2]);
         }
-        if (index * 3 + 1 == bits.length) {
-            encodedBytes[index] = encodeByteFrom3Bits(bits[index * 3], (byte) 0, (byte) 0);
-        } else if (index * 3 + 2 == bits.length) {
-            encodedBytes[index] = encodeByteFrom3Bits(bits[index * 3], bits[index * 3 + 1], (byte) 0);
-        } else if (index * 3 + 3 == bits.length) {
-            encodedBytes[index] = encodeByteFrom3Bits(bits[index * 3], bits[index * 3 + 1], bits[index * 3 + 2]);
+        byte bitA = 0, bitB = 0, bitC = 0;
+        if (index * 3 < bits.length) bitA = bits[index * 3];
+        if (index * 3 + 1 < bits.length) bitB = bits[index * 3 + 1];
+        if (index * 3 + 2 < bits.length) {
+            bitC = bits[index * 3 + 2];
+            assert index * 3 + 3 == bits.length;
         }
+        encodedBytes[index] = encodeByteFrom3Bits(bitA, bitB, bitC);
     }
 
     private static byte encodeByteFrom3Bits(byte biteA, byte biteB, byte biteC) {
