@@ -3,16 +3,80 @@ package correcter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Random;
 
 public class Main {
 
-    static final Random generator = new Random();
+    static final String ENCODE = "encode";
+    static final String SEND = "send";
+    static final String DECODE = "decode";
+
+    static final Random RANDOM = new Random();
 
     public static void main(String[] args) throws IOException {
         byte[] bytes = readBytesFromFile("send.txt");
-        byte[] spoiledBytes = spoilByteArray(bytes);
-        writeBytesToFile("received.txt", spoiledBytes);
+        System.out.println(Arrays.toString(bytes));
+        byte[] encodedBytes = encodeBytes(bytes);
+        System.out.println(Arrays.toString(encodedBytes));
+
+//        byte[] spoiledBytes = spoilByteArray(bytes);
+        writeBytesToFile("encoded.txt", encodedBytes);
+    }
+
+    static byte[] encodeBytes(byte[] bytes) {
+        byte[] bits = splitToBits(bytes);
+        int encodedByteArraySize = (int) Math.ceil(bytes.length * 8.0 / 3);
+        byte[] encodedBytes = new byte[encodedByteArraySize];
+        fillEncodedByteArray(bits, encodedBytes);
+        return encodedBytes;
+    }
+
+    private static void fillEncodedByteArray(byte[] bits, byte[] encodedBytes) {
+        int index = 0;
+        for (; index < encodedBytes.length - 1; index++) {
+            encodedBytes[index] = encodeByteFrom3Bits(bits[index * 3], bits[index * 3 + 1], bits[index * 3 + 2]);
+        }
+        if (index * 3 + 1 == bits.length) {
+            encodedBytes[index] = encodeByteFrom3Bits(bits[index * 3], (byte) 0, (byte) 0);
+        } else if (index * 3 + 2 == bits.length) {
+            encodedBytes[index] = encodeByteFrom3Bits(bits[index * 3], bits[index * 3 + 1], (byte) 0);
+        } else if (index * 3 + 3 == bits.length) {
+            encodedBytes[index] = encodeByteFrom3Bits(bits[index * 3], bits[index * 3 + 1], bits[index * 3 + 2]);
+        }
+    }
+
+    static byte encodeByteFrom3Bits(byte biteA, byte biteB, byte biteC) {
+        assert biteA == 0 || biteA == 1;
+        assert biteB == 0 || biteB == 1;
+        assert biteC == 0 || biteC == 1;
+
+        byte result = 0;
+        result |= biteA << 7;
+        result |= biteA << 6;
+        result |= biteB << 5;
+        result |= biteB << 4;
+        result |= biteC << 3;
+        result |= biteC << 2;
+
+        byte parity = ((byte) (biteA ^ biteB ^ biteC));
+        result |= parity << 1;
+        result |= parity;
+
+        return result;
+    }
+
+
+    static byte[] splitToBits(byte[] bytes) {
+        byte[] bites = new byte[bytes.length * 8];
+        int index = 0;
+        for (byte b : bytes) {
+            for (int i = 7; i >= 0; i--) {
+                byte mask = (byte) Math.pow(2, i);
+                bites[index++] = (mask & b) == 0 ? (byte) 0 : 1;
+            }
+        }
+        return bites;
     }
 
     static byte[] readBytesFromFile(String fileName) throws IOException {
@@ -40,8 +104,9 @@ public class Main {
     }
 
     static byte changeOneRandomBite(byte b) {
-        int power = generator.nextInt(8);
+        int power = RANDOM.nextInt(8);
         int mask = (int) Math.pow(2, power);
         return ((byte) (b ^ mask));
     }
 }
+
